@@ -1,7 +1,48 @@
 import logging
 import time
+import ifcopenshell
+from ifcopenshell.file import file
 from ..Common import Tiler, Groups
 from .ifcObjectGeom import IfcObjectsGeom
+from typing import Tuple, Union
+from ifcopenshell.file import file
+
+
+def convert_deg_min_sec_to_float(
+        coord: Union[Tuple[int, int, int], Tuple[int, int, int, int]]
+    ) -> float:
+    """
+    Convert ifcsite lon or lat to float
+
+    see https://standards.buildingsmart.org/IFC/RELEASE/IFC4_1/FINAL/HTML/schema/ifcmeasureresource/lexical/ifccompoundplaneanglemeasure.htm
+    """
+    float_coord = coord[0] + coord[1]/60. + coord[2]/3600.
+    # do we have the fourth component (millionth of seconds)?
+    if len(coord) == 4:
+        float_coord = float_coord + coord[3]/3600.e6; 
+    return float_coord
+
+
+def get_first_site_lon_lat(ifc_file: file) -> dict:
+    sites = ifc_file.by_type('IfcSite')
+    for site in sites:
+        if site.RefLatitude and site.RefLongitude:
+            latitude = convert_deg_min_sec_to_float(site.RefLatitude)
+            longitude = convert_deg_min_sec_to_float(site.RefLongitude)
+            # elevation parsing
+            if site.RefElevation is None:
+                elevation = 0
+            else:
+                try:
+                    elevation = float(site.RefElevation)
+                except ValueError:
+                    elevation = 0
+            return {
+                "latitude": latitude,
+                "longitude": longitude,
+                "elevation": elevation,
+            }
+    return {}
 
 
 class IfcTiler(Tiler):
@@ -39,6 +80,10 @@ class IfcTiler(Tiler):
         for path_to_file in self.files:
             ifc_file = ifcopenshell.open(path_to_file)
 
+            # note this works only in the case of c where I know there will be one file only
+            if position is None: 
+                position = get_first_site_lon_lat(ifc_file)
+
             print("Reading " + str(ifc_file))
             if grouped_by == 'IfcTypeObject':
                 pre_tileset = IfcObjectsGeom.retrievObjByType(ifc_file, with_BTH)
@@ -52,7 +97,9 @@ class IfcTiler(Tiler):
             objects.extend([objs for objs in pre_tileset.values() if len(objs) > 0])
         groups = Groups(objects).get_groups_as_list()
 
-        return self.create_tileset_from_groups(groups, "batch_table_hierarchy" if with_BTH else None)
+        tileset = self.create_tileset_from_groups(groups, "batch_table_hierarchy" if with_BTH else None)
+        tileset.attributes["extras"] = position
+        return tileset
 
 
 def main():
