@@ -6,6 +6,7 @@ import ifcopenshell
 from py3dtiles import GlTFMaterial
 from ..Common import Feature, FeatureList, TreeWithChildrenAndParent
 from ifcopenshell import geom
+from ifcopenshell.file import file
 from py3dtiles import BatchTableHierarchy
 
 
@@ -172,14 +173,12 @@ class IfcObjectsGeom(FeatureList):
             return None
 
     @staticmethod
-    def retrievObjByType(path_to_file, with_BTH):
+    def retrievObjByType(ifc_file: file, with_BTH):
         """
-        :param path: a path to a directory
+        :param ifc_file: an ifc file handle from ifcopenshell
 
         :return: a list of Obj.
         """
-        ifc_file = ifcopenshell.open(path_to_file)
-
         elements = ifc_file.by_type('IfcElement')
         ifc_space = ifc_file.by_type('IfcSpace')
         nb_element = str(len(elements))
@@ -204,14 +203,12 @@ class IfcObjectsGeom(FeatureList):
         return dictObjByType
 
     @staticmethod
-    def retrievObjByGroup(path_to_file):
+    def retrievObjByGroup(ifc_file: file):
         """
-        :param path: a path to a directory
+        :param ifc_file: an ifc file handle from ifcopenshell
 
         :return: a list of Obj.
         """
-        ifc_file = ifcopenshell.open(path_to_file)
-
         elements = ifc_file.by_type('IfcElement')
         nb_element = str(len(elements))
         logging.info(nb_element + " elements to parse")
@@ -243,13 +240,11 @@ class IfcObjectsGeom(FeatureList):
 
 
     @staticmethod
-    def retrievObjBySpace(path_to_file, with_BTH):
+    def retrievObjBySpace(ifc_file: file, with_BTH):
         """
-        :param path: a path to an ifc
+        :param ifc_file: an ifc file handle from ifcopenshell
         :return: a list of obj grouped by IfcSpace
         """
-        ifc_file = ifcopenshell.open(path_to_file)
-
         elements = ifc_file.by_type('IfcElement')
         nb_element = str(len(elements))
         logging.info(nb_element + " elements to parse")

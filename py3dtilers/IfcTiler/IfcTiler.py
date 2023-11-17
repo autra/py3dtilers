@@ -35,7 +35,10 @@ class IfcTiler(Tiler):
         :return: a tileset.
         """
         objects = []
-        for ifc_file in self.files:
+        position = None
+        for path_to_file in self.files:
+            ifc_file = ifcopenshell.open(path_to_file)
+
             print("Reading " + str(ifc_file))
             if grouped_by == 'IfcTypeObject':
                 pre_tileset = IfcObjectsGeom.retrievObjByType(ifc_file, with_BTH)
