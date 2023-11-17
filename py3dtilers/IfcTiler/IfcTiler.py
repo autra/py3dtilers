@@ -40,9 +40,11 @@ class IfcTiler(Tiler):
             if grouped_by == 'IfcTypeObject':
                 pre_tileset = IfcObjectsGeom.retrievObjByType(ifc_file, with_BTH)
             elif grouped_by == 'IfcGroup':
-                pre_tileset = IfcObjectsGeom.retrievObjByGroup(ifc_file, with_BTH)
+                pre_tileset = IfcObjectsGeom.retrievObjByGroup(ifc_file)
             elif grouped_by == 'IfcSpace':
                 pre_tileset = IfcObjectsGeom.retrievObjBySpace(ifc_file, with_BTH)
+            else:
+                raise Exception(f"Grouping by {grouped_by} is not supported")
 
             objects.extend([objs for objs in pre_tileset.values() if len(objs) > 0])
         groups = Groups(objects).get_groups_as_list()
